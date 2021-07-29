@@ -2,6 +2,20 @@
 
 This is a simple JWT decoder written in Rust.
 
+## Download
+
+Pre-built binaries can be found under [Releases](https://github.com/kennep/jwtdecode/releases).
+Just download the correct executable for your operating system and put it somewhere on your
+`PATH` to use it.
+
+## Building
+
+You can also build your own executable:
+
+```bash
+$ cargo build
+```
+
 ## Usage
 
 This program reads a JWT either from standard input or from a file, and outputs
@@ -26,12 +40,6 @@ Payload: {
   "sub": "1234567890"
 }
 Signature: SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-```
-
-## Building
-
-```bash
-$ cargo build
 ```
 
 ## Feedback
