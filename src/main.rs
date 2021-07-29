@@ -45,14 +45,17 @@ fn main() -> Result<()> {
 
     let header_val: serde_json::Value =
         serde_json::from_slice(&header_dec).with_context(|| "Header is not valid JSON")?;
-    let header_str = serde_json::to_string_pretty(&header_val)?;
 
     let payload_val: serde_json::Value =
         serde_json::from_slice(&payload_dec).with_context(|| "Payload is not valid JSON")?;
-    let payload_str = serde_json::to_string_pretty(&payload_val)?;
 
-    println!("Header: {}", header_str);
-    println!("Payload: {}", payload_str);
-    println!("Signature: {}", signature);
+    let output_val = serde_json::json!({
+        "header": header_val,
+        "payload": payload_val,
+        "signature": signature
+    });
+    let output_str = serde_json::to_string_pretty(&output_val)?;
+
+    println!("{}", output_str);
     Ok(())
 }
