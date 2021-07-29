@@ -11,10 +11,10 @@ struct Cli {
 
 fn read_to_string<R: Read>(reader: &mut R) -> std::io::Result<String> {
     let mut buffer = String::new();
-    return match reader.read_to_string(&mut buffer) {
+    match reader.read_to_string(&mut buffer) {
         Ok(_) => Ok(buffer),
         Err(e) => Err(e),
-    };
+    }
 }
 
 fn main() -> Result<()> {
@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     }?;
 
     content.retain(|c| !c.is_whitespace());
-    let items: Vec<&str> = content.split(".").collect();
+    let items: Vec<&str> = content.split('.').collect();
 
     if items.len() != 3 {
         bail!("Invalid JWT: Expected three items separated by string");
