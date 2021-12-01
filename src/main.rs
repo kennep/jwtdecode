@@ -8,9 +8,12 @@ struct Cli {
     #[structopt(default_value = "-", parse(from_os_str))]
     path: std::path::PathBuf,
 
+    /// Select a field by JSON path
     #[structopt(long = "--jsonpath", short = "-p")]
     jsonpath: Option<String>,
 
+    /// Output raw field value (when used with --jsonpath to select
+    /// a single field)
     #[structopt(long = "--raw", short = "-r")]
     raw: bool,
 }

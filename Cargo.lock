@@ -120,7 +120,7 @@ dependencies = [
 
 [[package]]
 name = "jwtdecode"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "base64",

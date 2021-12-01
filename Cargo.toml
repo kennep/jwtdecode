@@ -1,6 +1,6 @@
 [package]
 name = "jwtdecode"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Kenneth Wang Pedersen <kenneth.pedersen@vipps.no>"]
 edition = "2018"
 
