@@ -1,7 +1,6 @@
 use anyhow::{bail, Context, Result};
 use std::io::Read;
 use structopt::StructOpt;
-use jsonpath_lib;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -13,7 +12,7 @@ struct Cli {
     jsonpath: Option<String>,
 
     #[structopt(long = "--raw", short = "-r")]
-    raw: bool
+    raw: bool,
 }
 
 fn read_to_string<R: Read>(reader: &mut R) -> std::io::Result<String> {
@@ -62,20 +61,22 @@ fn main() -> Result<()> {
         "signature": signature
     });
     let output_val = match args.jsonpath {
-        Some(path) => match jsonpath_lib::select(&output_val, &path).with_context(|| "Invalid jsonpath")?[..] {
+        Some(path) => match jsonpath_lib::select(&output_val, &path)
+            .with_context(|| "Invalid jsonpath")?[..]
+        {
             [a, ..] => a,
-            [] => bail!("No match for {} in {}", path, serde_json::to_string_pretty(&output_val)?)
+            [] => bail!(
+                "No match for {} in {}",
+                path,
+                serde_json::to_string_pretty(&output_val)?
+            ),
         },
-        None => &output_val
+        None => &output_val,
     };
 
     if args.raw {
-        match output_val.as_str() {
-            Some(v) => {
-                println!("{}", v);
-                return Ok(());
-            },
-            None => ()
+        if let Some(val) = output_val.as_str() {
+            println!("{}", val);
         }
     }
 
