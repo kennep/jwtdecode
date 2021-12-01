@@ -44,6 +44,15 @@ $ echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
 }
 ```
 
+You can also extract a field by JSONPATH:
+
+```bash
+$ echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+> eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.
+> SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" | jwtdecode -p '$.header.alg'
+"HS256"
+```
+
 ## Feedback
 
 Feedback is most welcome. Submit an issue or PR for this repository on GitHub.

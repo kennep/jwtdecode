@@ -1,12 +1,19 @@
 use anyhow::{bail, Context, Result};
 use std::io::Read;
 use structopt::StructOpt;
+use jsonpath_lib;
 
 #[derive(StructOpt)]
 struct Cli {
     /// The path to the file to read the JWT from
     #[structopt(default_value = "-", parse(from_os_str))]
     path: std::path::PathBuf,
+
+    #[structopt(long = "--jsonpath", short = "-p")]
+    jsonpath: Option<String>,
+
+    #[structopt(long = "--raw", short = "-r")]
+    raw: bool
 }
 
 fn read_to_string<R: Read>(reader: &mut R) -> std::io::Result<String> {
@@ -54,8 +61,25 @@ fn main() -> Result<()> {
         "payload": payload_val,
         "signature": signature
     });
-    let output_str = serde_json::to_string_pretty(&output_val)?;
+    let output_val = match args.jsonpath {
+        Some(path) => match jsonpath_lib::select(&output_val, &path).with_context(|| "Invalid jsonpath")?[..] {
+            [a, ..] => a,
+            [] => bail!("No match for {} in {}", path, serde_json::to_string_pretty(&output_val)?)
+        },
+        None => &output_val
+    };
 
+    if args.raw {
+        match output_val.as_str() {
+            Some(v) => {
+                println!("{}", v);
+                return Ok(());
+            },
+            None => ()
+        }
+    }
+
+    let output_str = serde_json::to_string_pretty(output_val)?;
     println!("{}", output_str);
     Ok(())
 }
