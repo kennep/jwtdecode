@@ -1,6 +1,7 @@
 [package]
 name = "jwtdecode"
-version = "0.3.3"
+# Real version is set from the git tag in .github/workflows/release.yml
+version = "0.0.0"
 authors = ["Kenneth Wang Pedersen <kenneth.pedersen@vipps.no>"]
 edition = "2018"
 
