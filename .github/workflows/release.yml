@@ -29,7 +29,7 @@ jobs:
             target: aarch64-apple-darwin
             artifact: jwtdecode_macos_arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set version from tag
         shell: bash
@@ -58,7 +58,7 @@ jobs:
           mkdir -p dist
           cp "$BIN" "dist/${{ matrix.artifact }}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: dist/${{ matrix.artifact }}
@@ -71,9 +71,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
