@@ -118,6 +118,7 @@ jobs:
 
       - name: Strip and rename binaries
         run: |
+          mkdir -p target/release
           strip target/x86_64-apple-darwin/release/jwtdecode && mv target/x86_64-apple-darwin/release/jwtdecode target/release/jwtdecode_macos_amd64
           strip target/aarch64-apple-darwin/release/jwtdecode && mv target/aarch64-apple-darwin/release/jwtdecode target/release/jwtdecode_macos_arm64
 
