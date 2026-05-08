@@ -1,132 +1,87 @@
-
-on:
-  push:
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0
-
 name: Release
 
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
 jobs:
-  # crate_publish:
-  #   name: Publish on crates.io
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
-
-  #     - name: Run cargo login
-  #       uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-  #       with:
-  #         command: login
-  #         args: "${{secrets.CARGO_TOKEN}}"
- 
-  #     - name: Run cargo publish
-  #       uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-  #       with:
-  #         command: publish
-
-  release_linux:
-    name: Release (Linux)
-    runs-on: ubuntu-latest
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: jwtdecode_linux_amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: jwtdecode_windows_amd64.exe
+            ext: .exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: jwtdecode_macos_amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: jwtdecode_macos_arm64
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo build
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-        with:
-          command: build
-          args: --all --release
-
-      - name: Strip and rename binary
-        run: strip target/release/jwtdecode && mv target/release/jwtdecode target/release/jwtdecode_linux_amd64
-
-      - name: Release
-        uses: softprops/action-gh-release@b21b43df682dab285bf5146c1955e7f3560805f8
-        with:
-          files: |
-            target/release/jwtdecode_linux_amd64
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release_windows:
-    name: Release (Windows)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo build
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-        with:
-          command: build
-          args: --all --release
-
-      - name: Rename binary
-        run: ren target/release/jwtdecode.exe jwtdecode_windows_amd64.exe
-
-      - name: Release
-        uses: softprops/action-gh-release@b21b43df682dab285bf5146c1955e7f3560805f8
-        with:
-          files: |
-            target/release/jwtdecode_windows_amd64.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release_macos:
-    name: Release (macOS)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Add macOS targets
-        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
-
-      - name: Run cargo build (macOS AMD64)
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-        with:
-          command: build
-          args: --all --release --target x86_64-apple-darwin
-
-      - name: Run cargo build (macOS ARM64)
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
-        with:
-          command: build
-          args: --all --release --target aarch64-apple-darwin
-
-      - name: Strip and rename binaries
+      - name: Set version from tag
+        shell: bash
         run: |
-          mkdir -p target/release
-          strip target/x86_64-apple-darwin/release/jwtdecode && mv target/x86_64-apple-darwin/release/jwtdecode target/release/jwtdecode_macos_amd64
-          strip target/aarch64-apple-darwin/release/jwtdecode && mv target/aarch64-apple-darwin/release/jwtdecode target/release/jwtdecode_macos_arm64
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i.bak "0,/^version = .*/s//version = \"$VERSION\"/" Cargo.toml
+          rm Cargo.toml.bak
+          echo "Set Cargo.toml version to $VERSION"
+          grep '^version' Cargo.toml
 
-      - name: Release
-        uses: softprops/action-gh-release@b21b43df682dab285bf5146c1955e7f3560805f8
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Stage binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="target/${{ matrix.target }}/release/jwtdecode${{ matrix.ext }}"
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            strip "$BIN"
+          fi
+          mkdir -p dist
+          cp "$BIN" "dist/${{ matrix.artifact }}"
+
+      - uses: actions/upload-artifact@v4
         with:
-          files: |
-            target/release/jwtdecode_macos_amd64
-            target/release/jwtdecode_macos_arm64
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  upload:
+    name: Upload release assets
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload to release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ls -la dist
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
