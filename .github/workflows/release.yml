@@ -36,7 +36,10 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          sed -i.bak "0,/^version = .*/s//version = \"$VERSION\"/" Cargo.toml
+          # Cargo.toml has only one line matching `^version = `; dependency
+          # lines look like `<crate> = "..."`. Avoid the GNU-only `0,/re/`
+          # form, which silently does nothing on BSD sed (macOS).
+          sed -i.bak "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
           rm Cargo.toml.bak
           echo "Set Cargo.toml version to $VERSION"
           grep '^version' Cargo.toml
