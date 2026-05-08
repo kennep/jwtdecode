@@ -106,10 +106,10 @@ jobs:
         uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505
         with:
           command: build
-          args: --all --release
+          args: --all --release --target x86_64-apple-darwin
 
       - name: Strip and rename binary
-        run: strip target/release/jwtdecode && mv target/release/jwtdecode target/release/jwtdecode_macos_amd64
+        run: strip target/x86_64-apple-darwin/release/jwtdecode && mv target/x86_64-apple-darwin/release/jwtdecode target/release/jwtdecode_macos_amd64
 
       - name: Release
         uses: softprops/action-gh-release@b21b43df682dab285bf5146c1955e7f3560805f8
